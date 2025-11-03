@@ -1,6 +1,9 @@
 package net.sideways_sky.multimine;
 
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+import org.bukkit.Bukkit;
+import org.bukkit.Particle;
+import org.bukkit.SoundCategory;
 import org.bukkit.block.Block;
 
 import org.bukkit.craftbukkit.CraftWorld;
@@ -32,10 +35,25 @@ public class DamagedBlock {
 
     private final Block block;
     public void brake(Entity entity){
-        if(entity instanceof Player){
-            ((Player) entity).breakBlock(block);
+
+        if(entity instanceof Player player){
+            MultiMine.debugMessage("Brake - player");
+            if(player.breakBlock(block)) {
+                block.getWorld().playSound(
+                        block.getLocation(),
+                        block.getBlockSoundGroup().getBreakSound(),
+                        SoundCategory.BLOCKS,
+                        1.0f, 1.0f
+                );
+                block.getWorld().spawnParticle(
+                        Particle.BLOCK,
+                        block.getLocation().add(0.5, 0.5, 0.5),
+                        20, 0.3, 0.3, 0.3,
+                        block.getBlockData());
+            }
         } else {
-            block.breakNaturally();
+            MultiMine.debugMessage("Brake - non player");
+            block.breakNaturally(true);
         }
     }
 
