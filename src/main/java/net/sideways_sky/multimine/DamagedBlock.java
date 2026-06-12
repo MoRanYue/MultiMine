@@ -2,12 +2,13 @@ package net.sideways_sky.multimine;
 
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.SoundCategory;
+import org.bukkit.SoundGroup;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
 
-import org.bukkit.craftbukkit.CraftWorld;
-import org.bukkit.craftbukkit.block.CraftBlock;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +24,7 @@ public class DamagedBlock {
 
     public DamagedBlock(Block block){
         this.block = block;
-        entityId = net.minecraft.world.entity.Entity.nextEntityId();
+        entityId = block.hashCode();
         debugMessage("Created");
     }
     public void debugMessage(String message){
@@ -35,24 +36,26 @@ public class DamagedBlock {
 
     private final Block block;
     public void brake(Entity entity){
-
+        MultiMine.debugMessage("Brake - " + (entity instanceof Player ? "player" : "non player"));
         if(entity instanceof Player player){
-            MultiMine.debugMessage("Brake - player");
+            // Capture block properties BEFORE breaking (block becomes air after breakBlock)
+            SoundGroup soundGroup = block.getBlockSoundGroup();
+            BlockData blockData = block.getBlockData();
+            Location loc = block.getLocation().add(0.5, 0.5, 0.5);
             if(player.breakBlock(block)) {
-                block.getWorld().playSound(
-                        block.getLocation(),
-                        block.getBlockSoundGroup().getBreakSound(),
+                loc.getWorld().playSound(
+                        loc,
+                        soundGroup.getBreakSound(),
                         SoundCategory.BLOCKS,
                         1.0f, 1.0f
                 );
-                block.getWorld().spawnParticle(
+                loc.getWorld().spawnParticle(
                         Particle.BLOCK,
-                        block.getLocation().add(0.5, 0.5, 0.5),
+                        loc,
                         20, 0.3, 0.3, 0.3,
-                        block.getBlockData());
+                        blockData);
             }
         } else {
-            MultiMine.debugMessage("Brake - non player");
             block.breakNaturally(true);
         }
     }
@@ -98,7 +101,13 @@ public class DamagedBlock {
         sendPacket(Math.round(damage * 10F));
     }
     private void sendPacket(int progress){
-        ((CraftWorld) block.getWorld()).getHandle().destroyBlockProgress(entityId, ((CraftBlock) block).getPosition(), progress);
+        // progress: -1 = clear (no damage), 0-10 = destruction stage
+        // API requires progress between 0.0 and 1.0 (inclusive), where 0 = no damage
+        // Use entityId as sourceId so multiple blocks can show damage simultaneously
+        float damage = Math.max(0.0F, progress / 10.0F);
+        for (Player player : block.getWorld().getPlayers()) {
+            player.sendBlockDamage(block.getLocation(), damage, entityId);
+        }
     }
 
 }

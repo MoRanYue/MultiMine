@@ -21,7 +21,12 @@ public final class MultiMine extends JavaPlugin {
     @Override
     public void onDisable() {
         Events.damagedBlockMap.clear();
-        Bukkit.getScheduler().cancelTasks(this);
+        try {
+            Bukkit.getScheduler().cancelTasks(this);
+        } catch (UnsupportedOperationException ignored) {
+            // Folia: Bukkit.getScheduler() is unsupported;
+            // RegionScheduler/EntityScheduler tasks auto-cancel on disable
+        }
     }
 
     public static void debugMessage(String message){
