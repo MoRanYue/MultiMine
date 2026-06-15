@@ -2,6 +2,7 @@ package net.sideways_sky.multimine;
 
 import io.papermc.paper.event.block.BlockBreakProgressUpdateEvent;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -30,6 +31,10 @@ public class Events implements Listener {
     @EventHandler
     public static void onBlockBreakProgressUpdate(BlockBreakProgressUpdateEvent e){
         if(e.getProgress() <= 0){return;}
+        // BlockBreakProgressUpdateEvent only fires for gradual block mining (players).
+        // Filter out events from non-player entities to prevent re-entrant calls
+        // from our own sendBlockDamage(..., entityId) which use a custom entity ID.
+        if(!(e.getEntity() instanceof Player)){return;}
         DamagedBlock damagedBlock = damagedBlockMap.get(e.getBlock());
         if(damagedBlock == null){
             damagedBlock = new DamagedBlock(e.getBlock());
