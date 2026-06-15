@@ -45,7 +45,9 @@ public class Events implements Listener {
         if(increment <= 0){return;}
         damagedBlock.debugMessage("BreakProgressUpdateEvent: " + damagedBlock.damage + " += " + increment + " (" + e.getProgress() + " - " + damagedBlock.entityDamageMap.get(e.getEntity()) + ") | " + e.getEntity());
 
-        damagedBlock.damage += increment;
+        // Cap damage at 1.0 so that multi-player accumulation cannot push it beyond
+        // the valid range for sendBlockDamage (0.0 – 1.0 inclusive).
+        damagedBlock.damage = Math.min(1.0F, damagedBlock.damage + increment);
         if(damagedBlock.damage >= 1){
             damagedBlock.brake(e.getEntity());
         } else {

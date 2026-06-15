@@ -103,8 +103,10 @@ public class DamagedBlock {
     private void sendPacket(int progress){
         // progress: -1 = clear (no damage), 0-10 = destruction stage
         // API requires progress between 0.0 and 1.0 (inclusive), where 0 = no damage
+        // Clamp to [0.0, 1.0] as a safeguard against floating-point drift or
+        // multi-player accumulation pushing damage past 1.0
         // Use entityId as sourceId so multiple blocks can show damage simultaneously
-        float damage = Math.max(0.0F, progress / 10.0F);
+        float damage = Math.min(1.0F, Math.max(0.0F, progress / 10.0F));
         for (Player player : block.getWorld().getPlayers()) {
             player.sendBlockDamage(block.getLocation(), damage, entityId);
         }
