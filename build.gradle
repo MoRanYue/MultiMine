@@ -20,12 +20,12 @@ repositories {
 }
 
 dependencies {
-    paperweight.paperDevBundle("26.1.2.build.+")
+    paperweight.paperDevBundle("26.3.build.+")
 }
 
 tasks {
     runServer {
-        minecraftVersion("1.21.8")
+        minecraftVersion("26.3")
     }
 }
 
